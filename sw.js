@@ -1,4 +1,5 @@
 // Offline shell: serve from cache, refresh the cache in the background.
+// "no-cache" makes that refresh ask the server each time instead of trusting the browser's own HTTP cache.
 // No user data passes through here. Add new files to FILES.
 // ponytail: stale-while-revalidate per file, so a deploy lands on the second launch and one launch
 // can mix old and new files. Bump C on a breaking change; switch to a versioned precache if that bites.
@@ -9,7 +10,7 @@ self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   e.respondWith(caches.open(C).then(c => c.match(e.request).then(hit => {
-    const net = fetch(e.request).then(r => { if (r.ok) c.put(e.request, r.clone()); return r; });
+    const net = fetch(e.request, { cache: "no-cache" }).then(r => { if (r.ok) c.put(e.request, r.clone()); return r; });
     if (!hit) return net;
     e.waitUntil(net.catch(() => {}));
     return hit;

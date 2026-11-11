@@ -169,6 +169,19 @@ function act(a, d) {
       break;
     }
 
+    case "update": // throw away the cached app files and reload; the data in localStorage is not touched
+      (async () => {
+        flush();
+        try { await fetch("index.html?fresh=" + Date.now(), { cache: "no-store" }); } // would the reload work?
+        catch { toast("You’re offline. Try again with a connection."); return; }
+        try {
+          for (const k of await caches.keys()) await caches.delete(k);
+          await (await navigator.serviceWorker?.getRegistration())?.update();
+        } catch {}
+        location.reload();
+      })();
+      break;
+
     case "impnew": case "imprep": {
       const raw = val("imp"), imp = parseImport(raw);
       if (!imp) { toast("Nothing to import. Paste a table with one exercise per line."); break; }
@@ -254,4 +267,4 @@ document.addEventListener("touchend", endDrag);
 document.addEventListener("touchcancel", endDrag);
 
 render();
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {}); // the app still works without offline support
