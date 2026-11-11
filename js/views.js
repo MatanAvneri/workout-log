@@ -130,6 +130,10 @@ function manageHTML(w, ui) {
     </div>
     <p class="note">A whole plan with DAY headings becomes one workout per day; a day whose name already exists is updated and keeps its history. A backup file replaces every workout.</p>`;
   if (w) h += `<div class="row"><button class="btn danger" data-a="delw">${ui.confirm === "delw" ? `Tap again to delete “${esc(w.name)}”` : "Delete this workout"}</button></div>`;
+  h += `
+    <h3>App</h3>
+    <div class="row"><button class="btn" data-a="update">Update app</button></div>
+    <p class="note">Loads the newest version of the app. Your workouts and history stay on this phone.</p>`;
   return h;
 }
 

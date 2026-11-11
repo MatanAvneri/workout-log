@@ -58,4 +58,4 @@ Test:
 node test.mjs
 ```
 
-Deploy by pushing to `main`. The phone picks up a new version on the second launch after the push.
+Deploy by pushing to `main`. The phone picks up a new version on the second launch after the push, or straight away with Manage → Update app.
