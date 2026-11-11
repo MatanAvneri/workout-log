@@ -1,5 +1,5 @@
 // HTML for every screen. Pure functions of (state, ui) -> string. Clicks are wired by data-a in app.js.
-import { num, fmt, range, hint } from "./model.js";
+import { num, fmt, range, hint, repsText } from "./model.js";
 import { tableText } from "./io.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -39,14 +39,17 @@ function exerciseHTML(e, pick) {
     const r = e.today[i];
     const cls = ["set", r == null ? "empty" : r >= e.max ? "top" : r < e.min ? "low" : "", picking && pick.set === i ? "on" : ""].join(" ");
     sets += `<button class="${cls}" data-a="set" data-id="${id}" data-i="${i}" aria-label="Set ${i + 1}${r == null ? ", not logged" : ", " + r + " reps"}">
-      <small>Set ${i + 1}</small><span class="num">${r ?? "–"}</span></button>`;
+      <small>Set ${i + 1}${e.todayWs[i] ? " · " + esc(e.todayWs[i]) : ""}</small><span class="num">${r ?? "–"}</span></button>`;
   }
 
   let picker = "";
   if (picking) {
-    for (let k = Math.max(1, e.min - 4); k <= e.max + 3; k++)
+    for (let k = 1; k <= 40; k++)
       picker += `<button class="num${k >= e.min && k <= e.max ? " goal" : ""}" data-a="rep" data-n="${k}">${k}</button>`;
-    picker = `<div class="pick" id="pick">${picker}<button class="clear" data-a="rep" data-n="">Clear</button></div>`;
+    picker = `<div class="pick" id="pick">${picker}<button class="clear" data-a="rep" data-n="">Clear</button></div>
+      <label class="setw">Different weight for set ${pick.set + 1}
+        <input type="${n != null ? "number" : "text"}" inputmode="decimal" step="any" min="0" data-sw="${id}" data-i="${pick.set}"
+          value="${esc(e.todayWs[pick.set] ?? "")}" placeholder="${esc(e.weight)}"></label>`;
   }
 
   const t = hint(e);
@@ -104,7 +107,7 @@ function editHTML(w, ui) {
       <button class="btn" data-a="down">Move down</button>
       <button class="btn danger" data-a="delex">${ui.confirm === "delex" ? "Tap again to delete" : "Delete"}</button>
     </div>`;
-    if (e.log.length) h += `<h3>History</h3>` + e.log.slice(0, 8).map((l) => `<p class="sess"><span>${esc(l.d)}</span><span class="r">${esc((l.r || []).join(", "))} at ${esc(l.w)}</span></p>`).join("");
+    if (e.log.length) h += `<h3>History</h3>` + e.log.slice(0, 8).map((l) => `<p class="sess"><span>${esc(l.d)}</span><span class="r">${esc(repsText(l.r || [], l.ws))} at ${esc(l.w)}</span></p>`).join("");
   }
   return h;
 }
@@ -141,7 +144,7 @@ function historyHTML(state) {
   h += `<div class="row"><button class="btn" data-a="copyhist">Copy all history</button></div>`;
   for (const x of state.sessions) {
     h += `<h3>${esc(niceDate(x.d))} · ${esc(x.name)}</h3>`;
-    h += x.items.map((it) => `<p class="sess"><span>${esc(it.n)}</span><span class="r">${esc(it.r.join(", "))}${it.w ? " at " + esc(it.w) : ""}</span></p>`).join("");
+    h += x.items.map((it) => `<p class="sess"><span>${esc(it.n)}</span><span class="r">${esc(repsText(it.r, it.ws))}${it.w ? " at " + esc(it.w) : ""}</span></p>`).join("");
   }
   return h;
 }

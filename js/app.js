@@ -40,8 +40,11 @@ function render() {
   app.innerHTML = appHTML(state, w, ui, statusText());
   const days = app.querySelector(".days");
   if (days) days.scrollLeft = daysX;
-  const goal = app.querySelector("#pick .goal");
-  if (goal) goal.parentNode.scrollLeft = Math.max(0, goal.offsetLeft - 60);
+  const goals = app.querySelectorAll("#pick .goal");
+  if (goals.length) { // the picker holds 1-40; open it centred on the target range
+    const pick = goals[0].parentNode, a = goals[0], b = goals[goals.length - 1];
+    pick.scrollLeft = (a.offsetLeft + b.offsetLeft + b.offsetWidth - pick.clientWidth) / 2;
+  }
   layer.innerHTML = layerHTML(state, w, ui, !!ui.sheet && !sheetWasOpen);
   sheetWasOpen = !!ui.sheet;
   document.body.classList.toggle("locked", sheetWasOpen);
@@ -97,7 +100,8 @@ function act(a, d) {
       const i = ui.pick.set;
       while (e.today.length < e.sets) e.today.push(null);
       e.today[i] = d.n === "" ? null : +d.n;
-      if (e.today.every((x) => x == null)) { e.today = []; e.todayW = null; }
+      if (d.n === "") e.todayWs[i] = null; // Clear also drops that set's own weight
+      if (e.today.every((x) => x == null)) { e.today = []; e.todayWs = []; e.todayW = null; }
       else if (e.todayW == null) e.todayW = e.weight;
       // move on to the next empty set, wrapping round
       let next = -1;
@@ -123,6 +127,7 @@ function act(a, d) {
         step: val("f-step"), sets: val("f-sets"), min: val("f-min"), max: val("f-max"),
       });
       f.today = f.today.slice(0, f.sets);
+      f.todayWs = f.todayWs.slice(0, f.sets);
       if (s.isNew) w.exercises.push(f); else w.exercises[w.exercises.indexOf(t)] = f;
       ui.sheet = null;
       changed();
@@ -205,11 +210,20 @@ document.addEventListener("change", (ev) => {
     // rendering right now would replace the button under the finger and swallow that tap.
     setTimeout(() => { if (document.activeElement?.tagName !== "INPUT") render(); }, 300);
   }
+  if (t.dataset.sw != null) { // a different weight for one set (drop set), typed under the rep picker
+    const e = findEx(t.dataset.sw), i = +t.dataset.i, v = t.value.trim();
+    if (e) {
+      while (e.todayWs.length < e.sets) e.todayWs.push(null);
+      e.todayWs[i] = v === "" || v === e.weight ? null : num(v) != null ? fmt(num(v)) : v;
+      touch();
+    }
+    setTimeout(() => { if (document.activeElement?.tagName !== "INPUT") render(); }, 300); // same reason as above
+  }
   if (t.id === "f-wname") { const w = cur(); if (w) { w.name = t.value.trim() || "Workout"; touch(); } }
   if (t.id === "f-file" && t.files?.[0]) t.files[0].text().then((text) => { const el = $("imp"); if (el) el.value = text; });
 });
 
-document.addEventListener("focusin", (ev) => { if (ev.target.dataset?.w != null) ev.target.select(); }); // typing replaces the old weight
+document.addEventListener("focusin", (ev) => { if ((ev.target.dataset?.w ?? ev.target.dataset?.sw) != null) ev.target.select(); }); // typing replaces the old weight
 
 /* ---------- swipe a sheet down to close it ---------- */
 // Starts only when the sheet is scrolled to its top, so scrolling the content still works.
