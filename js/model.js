@@ -2,6 +2,17 @@
 
 export const uid = () => Math.random().toString(36).slice(2, 9);
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const str = (x) => (x == null || x === "" ? null : String(x));
+/** Per-set weights are stored only when at least one set differs from the exercise weight. */
+const withWs = (ws) => (Array.isArray(ws) && ws.some((x) => str(x) != null) ? { ws: ws.map(str) } : {});
+/** "12, 10 @40, 8 @30": reps, with the weight of any set done at a different weight. */
+export const repsText = (r, ws) => r.map((x, i) => (ws?.[i] ? `${x} @${ws[i]}` : x)).join(", ");
+/** The sets logged so far today, with any per-set weights lined up to them. */
+function logged(e) {
+  const r = [], ws = [];
+  e.today.forEach((x, i) => { if (x != null) { r.push(x); ws.push(e.todayWs[i] ?? null); } });
+  return { r, ws };
+}
 
 /** "50" or "50 kg" -> 50. Anything else ("light", "20 / 40") -> null, and is treated as text. */
 export function num(w) {
@@ -21,7 +32,7 @@ export function normEx(e = {}) {
   let max = clamp(parseInt(e.max, 10) || min, 1, 100);
   if (max < min) [min, max] = [max, min];
   const last = e.last && Array.isArray(e.last.r) && e.last.r.length
-    ? { d: String(e.last.d || ""), w: String(e.last.w ?? ""), r: e.last.r.map(Number) }
+    ? { d: String(e.last.d || ""), w: String(e.last.w ?? ""), r: e.last.r.map(Number), ...withWs(e.last.ws) }
     : null;
   return {
     id: e.id || uid(),
@@ -32,6 +43,7 @@ export function normEx(e = {}) {
     sets: clamp(parseInt(e.sets, 10) || 3, 1, 10),
     min, max,
     today: Array.isArray(e.today) ? e.today.map((x) => (x == null ? null : Number(x))) : [],
+    todayWs: Array.isArray(e.todayWs) ? Array.from(e.todayWs, str) : [], // weight per set when it differs (drop sets); null = the exercise weight
     todayW: e.todayW == null ? null : String(e.todayW),
     last,
     log: Array.isArray(e.log) ? e.log.slice(0, 20) : [],
@@ -51,7 +63,7 @@ export function normState(s) {
     .map((x) => ({
       d: String(x.d || ""),
       name: String(x.name || "Workout"),
-      items: x.items.map((i) => ({ n: String(i.n || ""), w: String(i.w ?? ""), r: (Array.isArray(i.r) ? i.r : []).map(Number) })),
+      items: x.items.map((i) => ({ n: String(i.n || ""), w: String(i.w ?? ""), r: (Array.isArray(i.r) ? i.r : []).map(Number), ...withWs(i.ws) })),
     }))
     .slice(0, 400);
   return { v: 1, active, workouts, sessions };
@@ -61,13 +73,14 @@ export function normState(s) {
 export function finish(state, w) {
   const d = today(), items = [];
   for (const x of w.exercises) {
-    const r = x.today.filter((v) => v != null);
+    const { r, ws } = logged(x);
     if (r.length) {
-      x.last = { d, w: x.todayW ?? x.weight, r };
+      x.last = { d, w: x.todayW ?? x.weight, r, ...withWs(ws) };
       x.log = [x.last, ...x.log].slice(0, 20);
-      items.push({ n: x.name, w: x.last.w, r: [...r] });
+      items.push({ n: x.name, w: x.last.w, r: [...r], ...withWs(ws) });
     }
     x.today = [];
+    x.todayWs = [];
     x.todayW = null;
   }
   if (items.length) state.sessions = [{ d, name: w.name, items }, ...state.sessions].slice(0, 400);
@@ -81,25 +94,28 @@ export function finish(state, w) {
  */
 export function hint(e) {
   if (e.tag === "warmup") return null;
-  const done = e.today.filter((x) => x != null);
+  const done = logged(e);
   let src, lead;
-  if (done.length >= e.sets) { src = { r: done, w: e.todayW ?? e.weight }; lead = "Today"; }
+  if (done.r.length >= e.sets) { src = { ...done, w: e.todayW ?? e.weight }; lead = "Today"; }
   else if (e.last) { src = e.last; lead = "Last time"; }
   else return null;
 
-  const line = lead + ": " + src.r.join(", ") + (src.w ? " at " + src.w : "") + ".";
+  const line = lead + ": " + repsText(src.r, src.ws) + (src.w ? " at " + src.w : "") + ".";
   if (String(src.w) !== String(e.weight)) return { tone: "", text: line + " Now set to " + e.weight + "." };
 
+  // sets done at a different weight (drop sets) don't count towards progression
+  const main = src.r.filter((_, i) => !src.ws?.[i]);
+  if (!main.length) return { tone: "", text: line };
   const w = num(src.w);
-  if (src.r.every((r) => r >= e.max)) {
+  if (main.every((r) => r >= e.max)) {
     if (w == null) return { tone: "up", text: line + " Top of the range on every set, so add weight." };
     return { tone: "up", text: line + " Top of the range on every set, so go up to " + fmt(w + e.step) + ".", to: fmt(w + e.step) };
   }
-  if (src.r.every((r) => r < e.min)) {
+  if (main.every((r) => r < e.min)) {
     if (w == null || w - e.step <= 0) return { tone: "low", text: line + " Under " + e.min + " on every set, so take some weight off." };
     return { tone: "low", text: line + " Under " + e.min + " on every set, so drop to " + fmt(w - e.step) + ".", to: fmt(w - e.step) };
   }
-  if (src.r.some((r) => r < e.min)) return { tone: "low", text: line + " Stay at this weight until every set reaches " + e.min + "." };
-  const need = src.r.reduce((a, r) => a + Math.max(0, e.max - r), 0);
+  if (main.some((r) => r < e.min)) return { tone: "low", text: line + " Stay at this weight until every set reaches " + e.min + "." };
+  const need = main.reduce((a, r) => a + Math.max(0, e.max - r), 0);
   return { tone: "", text: line + " Stay at this weight; " + need + " more rep" + (need === 1 ? "" : "s") + " tops out every set." };
 }

@@ -1,5 +1,5 @@
 // Import and export as text. Pure: no DOM, no storage. Checked by test.mjs.
-import { normEx, normState, uid } from "./model.js";
+import { normEx, normState, uid, repsText } from "./model.js";
 
 /** One exercise per line: `Name<TAB>Weight<TAB>3 × 10-12`, optional [WARM-UP] / [OPTIONAL] prefix. */
 export function parseTable(text) {
@@ -84,6 +84,6 @@ export function tableText(w) {
 /** Every finished session as tab-separated text. */
 export function historyText(state) {
   const rows = ["Date\tWorkout\tExercise\tWeight\tReps"];
-  for (const x of state.sessions) for (const it of x.items) rows.push([x.d, x.name, it.n, it.w, it.r.join(", ")].join("\t"));
+  for (const x of state.sessions) for (const it of x.items) rows.push([x.d, x.name, it.n, it.w, repsText(it.r, it.ws)].join("\t"));
   return rows.join("\n");
 }

@@ -31,6 +31,8 @@ Shown under each exercise once every set is logged, or from the last session. Wa
 - some sets below the bottom: hold until every set reaches it
 - otherwise: hold, and show how many reps remain to top out every set
 
+A set can be given its own weight under the rep picker (a drop set). It is saved with the session and left out of the rule above.
+
 ## Code
 
 | File | What it holds |

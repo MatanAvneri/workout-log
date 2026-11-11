@@ -17,6 +17,17 @@ assert.match(hint(ex({ today: [12, 11, 10] })).text, /3 more reps/);
 assert.match(hint(ex({ last: { d: "2026-01-01", w: "45", r: [12, 12, 12] } })).text, /Now set to 50/);
 assert.equal(hint(ex({ weight: "light", today: [12, 12, 12] })).to, undefined);
 
+// drop sets: a set done at its own weight is recorded, and ignored by the progression rule
+const drop = ex({ today: [12, 12, 6], todayWs: [null, null, "40"] });
+assert.equal(hint(drop).to, "51");
+assert.match(hint(drop).text, /12, 12, 6 @40 at 50/);
+const ds = normState({ workouts: [{ id: "w", name: "Heavy", exercises: [drop] }] });
+finish(ds, ds.workouts[0]);
+assert.deepEqual(ds.sessions[0].items[0].ws, [null, null, "40"]);
+assert.deepEqual(ds.workouts[0].exercises[0].todayWs, []);
+assert.deepEqual(normState(JSON.parse(JSON.stringify(ds))).workouts[0].exercises[0].last.ws, [null, null, "40"]);
+assert.equal(state0().sessions.length, 0);
+
 // import formats
 const [a, b] = parseTable("Exercise\tWeight\tSets and Reps\n[WARM-UP] Band Pull-Apart\tlight\t2 × 12-15\nBench Press\t50\t3 x 10");
 assert.deepEqual([a.name, a.tag, a.weight, a.sets, a.min, a.max], ["Band Pull-Apart", "warmup", "light", 2, 12, 15]);
@@ -30,10 +41,13 @@ assert.equal(parseImport("nothing here"), null);
 const state = normState({ workouts: [{ id: "w", name: "Heavy", exercises: [ex({ name: "Push-up", today: [10, null, 9] })] }] });
 assert.equal(finish(state, state.workouts[0]), 1);
 assert.deepEqual(state.sessions[0].items[0].r, [10, 9]);
+assert.equal(state.sessions[0].items[0].ws, undefined);
 assert.deepEqual(state.workouts[0].exercises[0].today, []);
 mergePlan(state, plan);
 assert.equal(state.workouts.length, 2);
 assert.deepEqual(state.workouts[0].exercises[0].last.r, [10, 9]);
 assert.equal(parseTable(tableText(state.workouts[0]))[0].name, "Push-up");
+
+function state0() { return normState({ sessions: [{ d: "x", items: null }] }); }
 
 console.log("ok");
