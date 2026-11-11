@@ -198,9 +198,18 @@ document.addEventListener("click", (ev) => {
 });
 document.addEventListener("change", (ev) => {
   const t = ev.target;
+  if (t.dataset.w != null) { // weight typed straight into an exercise card
+    const e = findEx(t.dataset.w), v = parseFloat(t.value);
+    if (e && v >= 0) { e.weight = fmt(v); touch(); }
+    // Re-render (resets a bad value, refreshes the hint) only after the tap that ended editing has landed:
+    // rendering right now would replace the button under the finger and swallow that tap.
+    setTimeout(() => { if (document.activeElement?.tagName !== "INPUT") render(); }, 300);
+  }
   if (t.id === "f-wname") { const w = cur(); if (w) { w.name = t.value.trim() || "Workout"; touch(); } }
   if (t.id === "f-file" && t.files?.[0]) t.files[0].text().then((text) => { const el = $("imp"); if (el) el.value = text; });
 });
+
+document.addEventListener("focusin", (ev) => { if (ev.target.dataset?.w != null) ev.target.select(); }); // typing replaces the old weight
 
 render();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
