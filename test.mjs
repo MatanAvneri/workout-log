@@ -1,7 +1,7 @@
 // Logic check, no dependencies:  node test.mjs
 import assert from "node:assert/strict";
 import { num, normEx, normState, hint, finish } from "./js/model.js";
-import { parseTable, parsePlan, parseImport, mergePlan, tableText } from "./js/io.js";
+import { parseTable, parsePlan, parseImport, mergePlan, tableText, historyText, parseHistory, mergeHistory } from "./js/io.js";
 
 assert.equal(num("50 kg"), 50);
 assert.equal(num("20 / 40"), null);
@@ -27,6 +27,19 @@ assert.deepEqual(ds.sessions[0].items[0].ws, [null, null, "40"]);
 assert.deepEqual(ds.workouts[0].exercises[0].todayWs, []);
 assert.deepEqual(normState(JSON.parse(JSON.stringify(ds))).workouts[0].exercises[0].last.ws, [null, null, "40"]);
 assert.equal(state0().sessions.length, 0);
+
+// history round trip: exported text imports back as the same sessions, once
+const exported = historyText(ds);
+assert.deepEqual(parseHistory(exported), ds.sessions);
+assert.ok(parseImport(exported).history);
+assert.equal(parseHistory("Bench Press\t50\t3 × 8-12"), null);
+assert.equal(mergeHistory(ds, parseHistory(exported)), 0);
+const fresh = normState({ workouts: [{ id: "w", name: "Heavy", exercises: [ex({ name: "Exercise" })] }] });
+const older = exported.replace(/\d{4}-\d{2}-\d{2}/g, "2020-01-02");
+assert.equal(mergeHistory(fresh, [...parseHistory(older), ...parseHistory(exported)]), 2);
+assert.deepEqual(fresh.sessions.map((x) => x.d), [ds.sessions[0].d, "2020-01-02"]);
+assert.deepEqual(fresh.workouts[0].exercises[0].last, { d: ds.sessions[0].d, w: "50", r: [12, 12, 6], ws: [null, null, "40"] });
+assert.equal(fresh.workouts[0].exercises[0].log.length, 2);
 
 // import formats
 const [a, b] = parseTable("Exercise\tWeight\tSets and Reps\n[WARM-UP] Band Pull-Apart\tlight\t2 × 12-15\nBench Press\t50\t3 x 10");

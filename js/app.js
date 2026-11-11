@@ -1,6 +1,6 @@
 // Wiring: holds the state, saves it on this phone, renders, and handles every tap.
 import { normState, normEx, num, fmt, today, uid, finish } from "./model.js";
-import { parseImport, mergePlan, keepHistory, historyText } from "./io.js";
+import { parseImport, mergePlan, mergeHistory, keepHistory, historyText } from "./io.js";
 import { appHTML, layerHTML } from "./views.js";
 
 const KEY = "workout-log"; // the only place data lives: this phone's localStorage
@@ -185,9 +185,13 @@ function act(a, d) {
     case "impnew": case "imprep": {
       const raw = val("imp"), imp = parseImport(raw);
       if (!imp) { toast("Nothing to import. Paste a table with one exercise per line."); break; }
-      if (a === "imprep" && !imp.plan && ui.confirm !== "imprep") { ui.confirm = "imprep"; render(); $("imp").value = raw; break; }
+      if (a === "imprep" && !imp.plan && !imp.history && ui.confirm !== "imprep") { ui.confirm = "imprep"; render(); $("imp").value = raw; break; }
       ui.confirm = null;
-      if (imp.plan) mergePlan(state, imp.plan);
+      let done = "Imported";
+      if (imp.history) {
+        const n = mergeHistory(state, imp.history);
+        done = n ? "Imported " + n + " session" + (n === 1 ? "" : "s") : "Those sessions are already here";
+      } else if (imp.plan) mergePlan(state, imp.plan);
       else if (imp.backup) {
         if (a === "imprep") state = imp.backup;
         else for (const x of imp.backup.workouts) { x.id = uid(); state.workouts.push(x); state.active = x.id; }
@@ -202,7 +206,7 @@ function act(a, d) {
       ui.sheet = null;
       ui.pick = null;
       changed();
-      toast("Imported");
+      toast(done);
       break;
     }
   }
