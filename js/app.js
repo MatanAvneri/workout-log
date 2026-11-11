@@ -211,5 +211,33 @@ document.addEventListener("change", (ev) => {
 
 document.addEventListener("focusin", (ev) => { if (ev.target.dataset?.w != null) ev.target.select(); }); // typing replaces the old weight
 
+/* ---------- swipe a sheet down to close it ---------- */
+// Starts only when the sheet is scrolled to its top, so scrolling the content still works.
+let drag = null; // { sheet, y0, dy }
+document.addEventListener("touchstart", (ev) => {
+  const sheet = ev.target.closest?.(".sheet");
+  if (!sheet || sheet.scrollTop > 0 || ev.target.closest("textarea") || ev.touches.length > 1) return;
+  drag = { sheet, y0: ev.touches[0].clientY, dy: 0 };
+}, { passive: true });
+document.addEventListener("touchmove", (ev) => {
+  if (!drag) return;
+  drag.dy = ev.touches[0].clientY - drag.y0;
+  if (drag.dy < 0) { drag.sheet.style.transform = ""; drag = null; return; } // finger went up: that's a scroll
+  if (ev.cancelable) ev.preventDefault();
+  drag.sheet.style.transition = "none";
+  drag.sheet.style.transform = `translateY(${drag.dy}px)`;
+}, { passive: false });
+function endDrag() {
+  if (!drag) return;
+  const { sheet, dy } = drag;
+  drag = null;
+  const close = dy > 90;
+  sheet.style.transition = "transform .2s ease-out";
+  sheet.style.transform = close ? "translateY(100%)" : "";
+  if (close) setTimeout(() => { ui.sheet = null; ui.confirm = null; render(); }, 180);
+}
+document.addEventListener("touchend", endDrag);
+document.addEventListener("touchcancel", endDrag);
+
 render();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
