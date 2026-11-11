@@ -6,7 +6,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 
 export function appHTML(state, w, ui, status) {
   const days = state.workouts
-    .map((x) => `<button class="day" data-a="day" data-id="${esc(x.id)}" aria-pressed="${x.id === state.active}">${esc(x.name)}</button>`)
+    .map((x, i) => `<button class="day" data-a="day" data-id="${esc(x.id)}" aria-pressed="${x.id === state.active}"><span class="n">${i + 1}</span>${esc(x.name)}</button>`)
     .join("");
   const body = w
     ? w.exercises.map((e) => exerciseHTML(e, ui.pick)).join("") + `<button class="add" data-a="addex">Add an exercise</button>`
@@ -29,7 +29,7 @@ function exerciseHTML(e, pick) {
   const weight = n != null
     ? `<div class="wt">
         <button class="step" data-a="dec" data-id="${id}" aria-label="Less weight">−</button>
-        <button class="val num" data-a="edit" data-id="${id}">${esc(fmt(n))}</button>
+        <input class="val num" type="number" inputmode="decimal" step="any" min="0" data-w="${id}" value="${esc(fmt(n))}" aria-label="Weight">
         <button class="step" data-a="inc" data-id="${id}" aria-label="More weight">+</button>
       </div>`
     : `<div class="wt txt"><button class="val" data-a="edit" data-id="${id}">${esc(e.weight || "Set weight")}</button></div>`;
