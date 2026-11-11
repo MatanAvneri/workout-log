@@ -21,6 +21,7 @@ Data lives only on the phone. Manage → Save backup file writes a JSON file wit
 - **One table**, one exercise per line, tab-separated: `Name<TAB>Weight<TAB>3 × 10-12`. Prefix a name with `[WARM-UP]` or `[OPTIONAL]` to tag it.
 - **A whole plan** with `DAY 1 — NAME` style headings: one workout per day. A day whose name already exists is updated and keeps its history.
 - **A JSON backup** saved by the app.
+- **Copied history**, the tab-separated text from History → Copy all history. Its sessions are added; ones already present are skipped.
 
 ## Progression rule
 

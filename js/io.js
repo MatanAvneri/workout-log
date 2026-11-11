@@ -41,12 +41,55 @@ export function parsePlan(text) {
   return out.length ? out : null;
 }
 
-/** What the Import box holds: { backup } | { plan } | { exercises } | null. */
+/** The text from "Copy all history" (Date, Workout, Exercise, Weight, Reps) -> sessions, or null if there are no such rows. */
+export function parseHistory(text) {
+  const by = new Map(); // ponytail: two sessions of the same workout on one day merge into one; add a session id column if that matters
+  for (const line of String(text || "").split(/\r?\n/)) {
+    const [d, name, n, w, reps] = line.split("\t").map((s) => s.trim());
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d || "") || !n || !reps) continue; // also skips the header row
+    const r = [], ws = [];
+    for (const part of reps.split(",")) {
+      const m = part.trim().match(/^(\d+)(?:\s*@\s*(.+))?$/); // "6 @40" = 6 reps at its own weight
+      if (m) { r.push(+m[1]); ws.push(m[2] ?? null); }
+    }
+    if (!r.length) continue;
+    const key = d + "\t" + name;
+    if (!by.has(key)) by.set(key, { d, name: name || "Workout", items: [] });
+    by.get(key).items.push({ n, w: w || "", r, ...(ws.some(Boolean) ? { ws } : {}) });
+  }
+  return by.size ? [...by.values()] : null;
+}
+
+/**
+ * Add imported sessions. One that is already here (same date and workout) is skipped, so importing
+ * your own export twice changes nothing. Matching exercises get the entry in their log, so
+ * "Last time" works again. Returns how many sessions were added.
+ */
+export function mergeHistory(state, sessions) {
+  const have = new Set(state.sessions.map((x) => x.d + "\t" + x.name.toLowerCase()));
+  const fresh = sessions.filter((x) => !have.has(x.d + "\t" + x.name.toLowerCase()));
+  const newestFirst = (a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0);
+  for (const x of fresh) {
+    const w = state.workouts.find((w) => w.name.toLowerCase() === x.name.toLowerCase());
+    for (const it of x.items) {
+      const e = w?.exercises.find((e) => e.name.toLowerCase() === it.n.toLowerCase());
+      if (!e) continue;
+      e.log = [...e.log, { d: x.d, w: it.w, r: it.r, ...(it.ws ? { ws: it.ws } : {}) }].sort(newestFirst).slice(0, 20);
+      e.last = e.log[0];
+    }
+  }
+  state.sessions = [...state.sessions, ...fresh].sort(newestFirst).slice(0, 400);
+  return fresh.length;
+}
+
+/** What the Import box holds: { backup } | { history } | { plan } | { exercises } | null. */
 export function parseImport(text) {
   const t = String(text || "").trim();
   if (t[0] === "{") {
     try { const o = JSON.parse(t); if (Array.isArray(o?.workouts)) return { backup: normState(o) }; } catch {}
   }
+  const history = parseHistory(t);
+  if (history) return { history };
   const plan = parsePlan(t);
   if (plan) return { plan };
   const exercises = parseTable(t);

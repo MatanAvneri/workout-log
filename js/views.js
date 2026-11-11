@@ -122,13 +122,13 @@ function manageHTML(w, ui) {
     <p class="note">The table pastes straight into Notes. The backup file holds every workout with its history.</p>`;
   h += `
     <h3>Import</h3>
-    <textarea id="imp" placeholder="Paste one table, or your whole plan with its DAY 1, DAY 2 headings"></textarea>
+    <textarea id="imp" placeholder="Paste one table, your whole plan with its DAY 1, DAY 2 headings, or copied history"></textarea>
     <input type="file" id="f-file" accept=".json,.txt,.csv,.tsv,text/plain,application/json">
     <div class="row">
       <button class="btn solid" data-a="impnew">Add as new workout</button>
       ${w ? `<button class="btn" data-a="imprep">${ui.confirm === "imprep" ? "Tap again to replace" : "Replace this workout"}</button>` : ""}
     </div>
-    <p class="note">A whole plan with DAY headings becomes one workout per day; a day whose name already exists is updated and keeps its history. A backup file replaces every workout.</p>`;
+    <p class="note">A whole plan with DAY headings becomes one workout per day; a day whose name already exists is updated and keeps its history. A backup file replaces every workout. History copied from the History sheet is added to your sessions with either button; sessions already here are skipped.</p>`;
   if (w) h += `<div class="row"><button class="btn danger" data-a="delw">${ui.confirm === "delw" ? `Tap again to delete “${esc(w.name)}”` : "Delete this workout"}</button></div>`;
   h += `
     <h3>App</h3>
