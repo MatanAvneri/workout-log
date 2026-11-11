@@ -1,0 +1,166 @@
+/* iOS look: system font, grouped cards, system colours, glass for everything that floats. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #F2F2F7; --card: #FFFFFF; --raised: #FFFFFF; --ink: #000000; --mute: #6D6D72;
+  --fill: rgba(120, 120, 128, .12); --rule: rgba(60, 60, 67, .14);
+  --accent: #007AFF; --on-accent: #FFFFFF; --tint: rgba(0, 122, 255, .12);
+  --up: #248A3D; --upbg: rgba(52, 199, 89, .18); --low: #D70015; --lowbg: rgba(255, 59, 48, .14);
+  --glass: rgba(255, 255, 255, .55); --glass-thick: rgba(242, 242, 247, .82);
+  --glass-edge: rgba(255, 255, 255, .85); --glass-shadow: 0 8px 32px rgba(0, 0, 0, .14);
+  --shade: rgba(0, 0, 0, .25);
+  --top: env(safe-area-inset-top, 0px); --bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000; --card: #1C1C1E; --raised: #3A3A3C; --ink: #FFFFFF; --mute: #98989F;
+    --fill: rgba(120, 120, 128, .24); --rule: rgba(84, 84, 88, .5);
+    --accent: #0A84FF; --tint: rgba(10, 132, 255, .2);
+    --up: #30D158; --upbg: rgba(48, 209, 88, .18); --low: #FF453A; --lowbg: rgba(255, 69, 58, .2);
+    --glass: rgba(44, 44, 48, .55); --glass-thick: rgba(28, 28, 30, .82);
+    --glass-edge: rgba(255, 255, 255, .14); --glass-shadow: 0 8px 32px rgba(0, 0, 0, .5);
+    --shade: rgba(0, 0, 0, .55);
+  }
+}
+
+/* The glass material. Add class="glass" to anything that floats over content. */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: inset 0 0 0 .5px var(--glass-edge), inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+}
+
+/* ---------- base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--bg); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; color: var(--ink);
+  font: 400 16px/1.35 -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body.locked { overflow: hidden; }
+/* soft accent glow behind the top of the page, so the glass has something to refract */
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: 60vh; z-index: -1; pointer-events: none;
+  background: radial-gradient(90% 100% at 50% 0%, var(--tint), transparent 70%);
+}
+/* content fades out under the status bar instead of colliding with the clock */
+body::after {
+  content: ""; position: fixed; inset: 0 0 auto; height: calc(var(--top) + 16px); z-index: 4; pointer-events: none;
+  background: linear-gradient(var(--bg) 35%, transparent);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button {
+  border: 0; padding: 0; background: none; cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: ui-rounded, -apple-system, system-ui, sans-serif; font-weight: 700; font-variant-numeric: tabular-nums; }
+p { margin: 0; }
+
+main { max-width: 560px; margin: 0 auto; padding: calc(var(--top) + 12px) 16px calc(var(--bottom) + 110px); }
+.card { background: var(--card); border-radius: 24px; padding: 16px; margin-bottom: 12px; }
+
+/* ---------- header and day switcher ---------- */
+.hdr { display: flex; align-items: flex-end; gap: 8px; padding: 0 4px; }
+.title { flex: 1; min-width: 0; }
+.hdr h1 { margin: 0; font-size: 34px; line-height: 1.1; font-weight: 800; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status { font-size: 13px; color: var(--mute); margin-top: 2px; }
+.chip { flex: none; height: 36px; padding: 0 14px; border-radius: 999px; background: var(--fill); color: var(--accent); font-weight: 600; font-size: 15px; }
+
+.days {
+  position: sticky; top: calc(var(--top) + 8px); z-index: 5;
+  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  margin: 14px 0 16px; padding: 4px; border-radius: 999px;
+}
+.days::-webkit-scrollbar, .pick::-webkit-scrollbar { display: none; }
+.day { flex: none; height: 38px; padding: 0 16px; border-radius: 999px; font-weight: 600; font-size: 15px; }
+.day[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); box-shadow: 0 2px 8px var(--tint); }
+
+/* ---------- exercise card ---------- */
+.head { display: flex; align-items: center; gap: 12px; }
+.name { flex: 1; min-width: 0; text-align: left; }
+.name b { display: block; font-weight: 600; font-size: 17px; line-height: 1.25; }
+.name span { display: block; font-size: 14px; color: var(--mute); margin-top: 2px; }
+.name .tag {
+  display: inline-block; margin: 0 6px 0 0; padding: 2px 6px; border-radius: 6px; vertical-align: 2px;
+  background: var(--fill); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+
+.wt { flex: none; display: flex; align-items: center; padding: 3px; border-radius: 999px; background: var(--fill); }
+.step { width: 36px; height: 36px; border-radius: 50%; background: var(--raised); color: var(--accent); font-size: 22px; line-height: 1; box-shadow: 0 1px 3px rgba(0, 0, 0, .12); }
+.val { min-width: 52px; padding: 0 6px; font-size: 22px; line-height: 1; text-align: center; }
+.wt.txt { background: none; padding: 0; }
+.wt.txt .val { max-width: 130px; font-size: 14px; line-height: 1.25; font-weight: 500; text-align: right; color: var(--mute); }
+
+.sets { display: grid; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); gap: 8px; margin-top: 14px; }
+.set { height: 58px; border-radius: 16px; background: var(--fill); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.set small { font-size: 11px; font-weight: 600; color: var(--mute); }
+.set .num { font-size: 24px; margin-top: 3px; }
+.set.empty .num { color: var(--mute); opacity: .45; }
+.set.top { background: var(--upbg); color: var(--up); }
+.set.low { background: var(--lowbg); color: var(--low); }
+.set.top small, .set.low small { color: inherit; }
+.set.on { box-shadow: 0 0 0 2px var(--accent); }
+
+/* rep picker: bleeds to the card edges so it reads as a scroller */
+.pick { position: relative; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 12px -16px 0; padding: 2px 16px 4px; }
+.pick button { flex: none; min-width: 48px; height: 48px; padding: 0 12px; border-radius: 999px; background: var(--fill); font-size: 21px; }
+.pick .goal { background: var(--tint); color: var(--accent); }
+.pick .clear { font-size: 14px; font-weight: 600; color: var(--mute); padding: 0 16px; }
+
+.hint { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--mute); }
+.hint p { flex: 1; }
+.hint.up p { color: var(--up); }
+.hint.low p { color: var(--low); }
+.hint button { flex: none; height: 34px; padding: 0 14px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-weight: 600; }
+
+.add { width: 100%; height: 52px; border-radius: 18px; background: var(--tint); color: var(--accent); font-weight: 600; }
+
+.empty-state { padding: 28px 20px; }
+.empty-state h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; }
+.empty-state p { margin-bottom: 20px; color: var(--mute); }
+
+/* ---------- floating: finish bar, toast ---------- */
+.bar { position: fixed; z-index: 6; left: 16px; right: 16px; bottom: calc(var(--bottom) + 12px); max-width: 528px; margin: 0 auto; padding: 6px; border-radius: 999px; }
+.primary { width: 100%; height: 50px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 17px; }
+.toast { position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: calc(var(--bottom) + 88px); max-width: 90%; padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; text-align: center; }
+
+/* ---------- bottom sheet ---------- */
+.veil { position: fixed; inset: 0; z-index: 20; display: flex; align-items: flex-end; justify-content: center; background: var(--shade); }
+.sheet {
+  width: 100%; max-width: 560px; max-height: 90%; overflow-y: auto; overscroll-behavior: contain;
+  border-radius: 28px 28px 0 0; padding: 8px 16px calc(var(--bottom) + 24px); background: var(--glass-thick);
+}
+.sheet::before { content: ""; display: block; width: 36px; height: 5px; border-radius: 3px; margin: 0 auto 12px; background: var(--mute); opacity: .4; }
+.sheet h2 { display: flex; justify-content: space-between; align-items: center; margin: 0 0 8px; font-size: 20px; font-weight: 700; }
+.sheet h3 { margin: 24px 4px 8px; font-size: 13px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--mute); }
+.link { min-height: 40px; padding: 0 4px; color: var(--accent); font-weight: 600; font-size: 17px; }
+.note { margin-top: 8px; padding: 0 4px; font-size: 13px; color: var(--mute); }
+.sess { display: flex; justify-content: space-between; gap: 12px; padding: 9px 4px; border-top: 1px solid var(--rule); font-size: 15px; }
+.sess .r { flex: none; max-width: 55%; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+label { display: block; margin-top: 12px; padding: 0 4px; font-size: 13px; color: var(--mute); }
+input[type=text], input[type=number], select, textarea {
+  display: block; width: calc(100% + 8px); margin: 6px -4px 0; padding: 12px 14px;
+  border: 0; border-radius: 12px; background: var(--raised); color: var(--ink); font-size: 16px; /* 16px stops iOS zooming on focus */
+}
+textarea { min-height: 120px; font-size: 14px; white-space: pre; overflow: auto; width: 100%; margin: 0; }
+input[type=file] { margin-top: 10px; font-size: 14px; max-width: 100%; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.btn { flex: 1 1 auto; min-height: 48px; padding: 0 14px; border-radius: 14px; background: var(--raised); color: var(--accent); font-weight: 600; }
+.btn.solid { background: var(--accent); color: var(--on-accent); }
+.btn.danger { color: var(--low); }
+
+/* ---------- motion ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  button { transition: transform .15s ease, background-color .15s ease, opacity .15s ease; }
+  button:active { transform: scale(.95); opacity: .8; }
+  .veil.fresh { animation: fade .25s ease-out; }
+  .veil.fresh .sheet { animation: rise .42s cubic-bezier(.2, .9, .3, 1); }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes rise { from { transform: translateY(100%); } }
+}
