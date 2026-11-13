@@ -99,6 +99,9 @@ function act(a, d) {
       if (!e) break;
       const i = ui.pick.set;
       while (e.today.length < e.sets) e.today.push(null);
+      while (e.todayWs.length < e.sets) e.todayWs.push(null);
+      // first log of a set with no weight of its own: it carries on from the set before (drop sets)
+      if (d.n !== "" && e.today[i] == null && e.todayWs[i] == null && i > 0) e.todayWs[i] = e.todayWs[i - 1];
       e.today[i] = d.n === "" ? null : +d.n;
       if (d.n === "") e.todayWs[i] = null; // Clear also drops that set's own weight
       if (e.today.every((x) => x == null)) { e.today = []; e.todayWs = []; e.todayW = null; }
@@ -155,6 +158,11 @@ function act(a, d) {
     case "copyhist":
       copy(historyText(state), "History copied", () => toast("Copying isn’t allowed here. Use Save backup file under Manage."));
       break;
+    case "copysess": {
+      const x = state.sessions[+d.i];
+      if (x) copy(historyText(state, [x]), "Session copied", () => toast("Copying isn’t allowed here. Use Save backup file under Manage."));
+      break;
+    }
     case "copy":
       copy(val("exp"), "Table copied", () => { $("exp")?.select(); toast("Select the text and copy it"); });
       break;

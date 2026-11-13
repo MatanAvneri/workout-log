@@ -29,7 +29,7 @@ Data lives only on the phone. Manage → Save backup file writes a JSON file wit
 - **One table**, one exercise per line, tab-separated: `Name<TAB>Weight<TAB>3 × 10-12`. Prefix a name with `[WARM-UP]` or `[OPTIONAL]` to tag it.
 - **A whole plan** with `DAY 1 — NAME` style headings: one workout per day. A day whose name already exists is updated and keeps its history.
 - **A JSON backup** saved by the app.
-- **Copied history**, the tab-separated text from History → Copy all history. Its sessions are added; ones already present are skipped.
+- **Copied history**, the tab-separated text from History → Copy all history, or Copy next to one session. Its sessions are added; ones already present are skipped.
 
 ### Example
 
@@ -62,7 +62,7 @@ Shown under each exercise once every set is logged, or from the last session. Wa
 - some sets below the bottom: hold until every set reaches it
 - otherwise: hold, and show how many reps remain to top out every set
 
-A set can be given its own weight under the rep picker (a drop set). It is saved with the session and left out of the rule above.
+A set can be given its own weight under the rep picker (a drop set). The sets after it start from that weight. It is saved with the session and left out of the rule above.
 
 ## Code
 

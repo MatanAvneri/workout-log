@@ -125,8 +125,8 @@ export function tableText(w) {
 }
 
 /** Every finished session as tab-separated text. */
-export function historyText(state) {
+export function historyText(state, sessions = state.sessions) {
   const rows = ["Date\tWorkout\tExercise\tWeight\tReps"];
-  for (const x of state.sessions) for (const it of x.items) rows.push([x.d, x.name, it.n, it.w, repsText(it.r, it.ws)].join("\t"));
+  for (const x of sessions) for (const it of x.items) rows.push([x.d, x.name, it.n, it.w, repsText(it.r, it.ws)].join("\t"));
   return rows.join("\n");
 }
