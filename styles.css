@@ -5,7 +5,7 @@
   --bg: #F2F2F7; --card: #FFFFFF; --raised: #FFFFFF; --ink: #000000; --mute: #6D6D72;
   --fill: rgba(120, 120, 128, .12); --rule: rgba(60, 60, 67, .14);
   --accent: #007AFF; --on-accent: #FFFFFF; --tint: rgba(0, 122, 255, .12);
-  --up: #248A3D; --upbg: rgba(52, 199, 89, .18); --low: #D70015; --lowbg: rgba(255, 59, 48, .14);
+  --up: #248A3D; --upbg: rgba(52, 199, 89, .18); --low: #C93400; --lowbg: rgba(255, 149, 0, .16);
   --glass: rgba(255, 255, 255, .55); --glass-thick: rgba(242, 242, 247, .82);
   --glass-edge: rgba(255, 255, 255, .85); --glass-shadow: 0 8px 32px rgba(0, 0, 0, .14);
   --shade: rgba(0, 0, 0, .25);
@@ -16,7 +16,7 @@
     --bg: #000000; --card: #1C1C1E; --raised: #3A3A3C; --ink: #FFFFFF; --mute: #98989F;
     --fill: rgba(120, 120, 128, .24); --rule: rgba(84, 84, 88, .5);
     --accent: #0A84FF; --tint: rgba(10, 132, 255, .2);
-    --up: #30D158; --upbg: rgba(48, 209, 88, .18); --low: #FF453A; --lowbg: rgba(255, 69, 58, .2);
+    --up: #30D158; --upbg: rgba(48, 209, 88, .18); --low: #FF9F0A; --lowbg: rgba(255, 159, 10, .18);
     --glass: rgba(44, 44, 48, .55); --glass-thick: rgba(28, 28, 30, .82);
     --glass-edge: rgba(255, 255, 255, .14); --glass-shadow: 0 8px 32px rgba(0, 0, 0, .5);
     --shade: rgba(0, 0, 0, .55);
@@ -140,7 +140,8 @@ input.val::-webkit-inner-spin-button, input.val::-webkit-outer-spin-button { -we
 }
 .sheet::before { content: ""; display: block; width: 36px; height: 5px; border-radius: 3px; margin: 0 auto 12px; background: var(--mute); opacity: .4; }
 .sheet h2 { display: flex; justify-content: space-between; align-items: center; margin: 0 0 8px; font-size: 20px; font-weight: 700; }
-.sheet h3 { margin: 24px 4px 8px; font-size: 13px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--mute); }
+.sheet h3 { display: flex; justify-content: space-between; align-items: center; margin: 24px 4px 8px; font-size: 13px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--mute); }
+.sheet h3 .link { min-height: 0; font-size: 15px; letter-spacing: 0; text-transform: none; }
 .link { min-height: 40px; padding: 0 4px; color: var(--accent); font-weight: 600; font-size: 17px; }
 .note { margin-top: 8px; padding: 0 4px; font-size: 13px; color: var(--mute); }
 .sess { display: flex; justify-content: space-between; gap: 12px; padding: 9px 4px; border-top: 1px solid var(--rule); font-size: 15px; }

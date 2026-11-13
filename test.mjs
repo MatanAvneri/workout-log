@@ -63,4 +63,16 @@ assert.equal(parseTable(tableText(state.workouts[0]))[0].name, "Push-up");
 
 function state0() { return normState({ sessions: [{ d: "x", items: null }] }); }
 
+
+// copying one session gives the header plus that session's rows, and imports back
+{
+  const s = normState({ v: 1, workouts: [], sessions: [
+    { d: "2026-03-06", name: "Heavy", items: [{ n: "Row", w: "40", r: [12, 10, 8], ws: [null, null, "30"] }] },
+    { d: "2026-03-04", name: "Light", items: [{ n: "Push-up", w: "", r: [15] }] },
+  ] });
+  const one = historyText(s, [s.sessions[0]]);
+  assert.equal(one.split("\n").length, 2);
+  assert.match(one, /12, 10, 8 @30/);
+  assert.equal(parseHistory(one).length, 1);
+}
 console.log("ok");

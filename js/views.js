@@ -37,7 +37,7 @@ function exerciseHTML(e, pick) {
   let sets = "";
   for (let i = 0; i < e.sets; i++) {
     const r = e.today[i];
-    const cls = ["set", r == null ? "empty" : r >= e.max ? "top" : r < e.min ? "low" : "", picking && pick.set === i ? "on" : ""].join(" ");
+    const cls = ["set", r == null ? "empty" : r >= e.max ? "top" : r < e.min && !e.todayWs[i] ? "low" : "", picking && pick.set === i ? "on" : ""].join(" ");
     sets += `<button class="${cls}" data-a="set" data-id="${id}" data-i="${i}" aria-label="Set ${i + 1}${r == null ? ", not logged" : ", " + r + " reps"}">
       <small>Set ${i + 1}${e.todayWs[i] ? " · " + esc(e.todayWs[i]) : ""}</small><span class="num">${r ?? "–"}</span></button>`;
   }
@@ -49,7 +49,7 @@ function exerciseHTML(e, pick) {
     picker = `<div class="pick" id="pick">${picker}<button class="clear" data-a="rep" data-n="">Clear</button></div>
       <label class="setw">Different weight for set ${pick.set + 1}
         <input type="${n != null ? "number" : "text"}" inputmode="decimal" step="any" min="0" data-sw="${id}" data-i="${pick.set}"
-          value="${esc(e.todayWs[pick.set] ?? "")}" placeholder="${esc(e.weight)}"></label>`;
+          value="${esc(e.todayWs[pick.set] ?? "")}" placeholder="${esc(e.todayWs[pick.set - 1] ?? e.weight)}"></label>`;
   }
 
   const t = hint(e);
@@ -146,9 +146,9 @@ function historyHTML(state) {
   let h = sheetTitle("History");
   if (!state.sessions.length) return h + `<p class="note">No sessions yet. Log your sets and tap Finish workout, and each session is listed here.</p>`;
   h += `<div class="row"><button class="btn" data-a="copyhist">Copy all history</button></div>`;
-  for (const x of state.sessions) {
-    h += `<h3>${esc(niceDate(x.d))} · ${esc(x.name)}</h3>`;
+  state.sessions.forEach((x, i) => {
+    h += `<h3>${esc(niceDate(x.d))} · ${esc(x.name)}<button class="link" data-a="copysess" data-i="${i}">Copy</button></h3>`;
     h += x.items.map((it) => `<p class="sess"><span>${esc(it.n)}</span><span class="r">${esc(repsText(it.r, it.ws))}${it.w ? " at " + esc(it.w) : ""}</span></p>`).join("");
-  }
+  });
   return h;
 }
