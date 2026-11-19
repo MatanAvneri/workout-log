@@ -106,6 +106,8 @@ input.val::-webkit-inner-spin-button, input.val::-webkit-outer-spin-button { -we
 .set.low { background: var(--lowbg); color: var(--low); }
 .set.top small, .set.low small { color: inherit; }
 .set.on { box-shadow: 0 0 0 2px var(--accent); }
+.set.more { background: none; border: 1.5px dashed var(--rule); color: var(--accent); font-size: 26px; font-weight: 500; }
+.link.drop { display: block; margin-top: 6px; min-height: 36px; font-size: 15px; color: var(--mute); }
 
 /* rep picker: bleeds to the card edges so it reads as a scroller */
 .pick { position: relative; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 12px -16px 0; padding: 2px 16px 4px; }

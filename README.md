@@ -62,7 +62,7 @@ Shown under each exercise once every set is logged, or from the last session. Wa
 - some sets below the bottom: hold until every set reaches it
 - otherwise: hold, and show how many reps remain to top out every set
 
-A set can be given its own weight under the rep picker (a drop set). The sets after it start from that weight. It is saved with the session and left out of the rule above.
+The + after the sets adds a set for today, and Remove set under the rep picker drops one; the plan keeps its set count. A set can be given its own weight under the rep picker (a drop set). The sets after it start from that weight. It is saved with the session and left out of the rule above.
 
 ## Code
 
