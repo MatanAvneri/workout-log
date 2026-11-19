@@ -1,5 +1,5 @@
 // Wiring: holds the state, saves it on this phone, renders, and handles every tap.
-import { normState, normEx, num, fmt, today, uid, finish } from "./model.js";
+import { normState, normEx, num, fmt, today, uid, finish, setCount, addSet, removeSet } from "./model.js";
 import { parseImport, mergePlan, mergeHistory, keepHistory, historyText } from "./io.js";
 import { appHTML, layerHTML } from "./views.js";
 
@@ -97,9 +97,9 @@ function act(a, d) {
     case "rep": {
       e = ui.pick && findEx(ui.pick.ex);
       if (!e) break;
-      const i = ui.pick.set;
-      while (e.today.length < e.sets) e.today.push(null);
-      while (e.todayWs.length < e.sets) e.todayWs.push(null);
+      const i = ui.pick.set, n = setCount(e);
+      while (e.today.length < n) e.today.push(null);
+      while (e.todayWs.length < n) e.todayWs.push(null);
       // first log of a set with no weight of its own: it carries on from the set before (drop sets)
       if (d.n !== "" && e.today[i] == null && e.todayWs[i] == null && i > 0) e.todayWs[i] = e.todayWs[i - 1];
       e.today[i] = d.n === "" ? null : +d.n;
@@ -108,11 +108,23 @@ function act(a, d) {
       else if (e.todayW == null) e.todayW = e.weight;
       // move on to the next empty set, wrapping round
       let next = -1;
-      if (d.n !== "") for (let k = 1; k <= e.sets && next < 0; k++) if (e.today[(i + k) % e.sets] == null) next = (i + k) % e.sets;
+      if (d.n !== "") for (let k = 1; k <= n && next < 0; k++) if (e.today[(i + k) % n] == null) next = (i + k) % n;
       ui.pick = next >= 0 ? { ex: e.id, set: next } : null;
       changed();
       break;
     }
+    case "addset":
+      if (!e) break;
+      addSet(e);
+      ui.pick = { ex: e.id, set: setCount(e) - 1 }; // open the new set's rep picker
+      changed();
+      break;
+    case "delset":
+      if (!e || ui.pick?.ex !== e.id) break;
+      removeSet(e, ui.pick.set);
+      ui.pick = null;
+      changed();
+      break;
     case "finish": {
       if (!w) break;
       const c = finish(state, w);
@@ -129,6 +141,7 @@ function act(a, d) {
         ...t, name: val("f-name").trim() || "Exercise", tag: val("f-tag"), weight: val("f-weight").trim(),
         step: val("f-step"), sets: val("f-sets"), min: val("f-min"), max: val("f-max"),
       });
+      f.todayN = null; // a new plan count replaces today's
       f.today = f.today.slice(0, f.sets);
       f.todayWs = f.todayWs.slice(0, f.sets);
       if (s.isNew) w.exercises.push(f); else w.exercises[w.exercises.indexOf(t)] = f;
@@ -238,7 +251,7 @@ document.addEventListener("change", (ev) => {
   if (t.dataset.sw != null) { // a different weight for one set (drop set), typed under the rep picker
     const e = findEx(t.dataset.sw), i = +t.dataset.i, v = t.value.trim();
     if (e) {
-      while (e.todayWs.length < e.sets) e.todayWs.push(null);
+      while (e.todayWs.length < setCount(e)) e.todayWs.push(null);
       e.todayWs[i] = v === "" || v === e.weight ? null : num(v) != null ? fmt(num(v)) : v;
       touch();
     }

@@ -1,5 +1,5 @@
 // HTML for every screen. Pure functions of (state, ui) -> string. Clicks are wired by data-a in app.js.
-import { num, fmt, range, hint, repsText } from "./model.js";
+import { num, fmt, range, hint, repsText, setCount } from "./model.js";
 import { tableText } from "./io.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -35,12 +35,14 @@ function exerciseHTML(e, pick) {
     : `<div class="wt txt"><button class="val" data-a="edit" data-id="${id}">${esc(e.weight || "Set weight")}</button></div>`;
 
   let sets = "";
-  for (let i = 0; i < e.sets; i++) {
+  const count = setCount(e);
+  for (let i = 0; i < count; i++) {
     const r = e.today[i];
     const cls = ["set", r == null ? "empty" : r >= e.max ? "top" : r < e.min && !e.todayWs[i] ? "low" : "", picking && pick.set === i ? "on" : ""].join(" ");
     sets += `<button class="${cls}" data-a="set" data-id="${id}" data-i="${i}" aria-label="Set ${i + 1}${r == null ? ", not logged" : ", " + r + " reps"}">
       <small>Set ${i + 1}${e.todayWs[i] ? " · " + esc(e.todayWs[i]) : ""}</small><span class="num">${r ?? "–"}</span></button>`;
   }
+  if (count < 10) sets += `<button class="set more" data-a="addset" data-id="${id}" aria-label="Add a set for today">+</button>`;
 
   let picker = "";
   if (picking) {
@@ -49,7 +51,8 @@ function exerciseHTML(e, pick) {
     picker = `<div class="pick" id="pick">${picker}<button class="clear" data-a="rep" data-n="">Clear</button></div>
       <label class="setw">Different weight for set ${pick.set + 1}
         <input type="${n != null ? "number" : "text"}" inputmode="decimal" step="any" min="0" data-sw="${id}" data-i="${pick.set}"
-          value="${esc(e.todayWs[pick.set] ?? "")}" placeholder="${esc(e.todayWs[pick.set - 1] ?? e.weight)}"></label>`;
+          value="${esc(e.todayWs[pick.set] ?? "")}" placeholder="${esc(e.todayWs[pick.set - 1] ?? e.weight)}"></label>
+      ${count > 1 ? `<button class="link drop" data-a="delset" data-id="${id}">Remove set ${pick.set + 1} for today</button>` : ""}`;
   }
 
   const t = hint(e);
@@ -59,7 +62,7 @@ function exerciseHTML(e, pick) {
 
   return `<section class="card ex">
     <div class="head">
-      <button class="name" data-a="edit" data-id="${id}"><b>${tag}${esc(e.name)}</b><span>${e.sets} × ${range(e)}</span></button>
+      <button class="name" data-a="edit" data-id="${id}"><b>${tag}${esc(e.name)}</b><span>${count} × ${range(e)}</span></button>
       ${weight}
     </div>
     <div class="sets">${sets}</div>${picker}${advice}

@@ -1,6 +1,6 @@
 // Logic check, no dependencies:  node test.mjs
 import assert from "node:assert/strict";
-import { num, normEx, normState, hint, finish } from "./js/model.js";
+import { num, normEx, normState, hint, finish, setCount, addSet, removeSet } from "./js/model.js";
 import { parseTable, parsePlan, parseImport, mergePlan, tableText, historyText, parseHistory, mergeHistory } from "./js/io.js";
 
 assert.equal(num("50 kg"), 50);
@@ -74,5 +74,25 @@ function state0() { return normState({ sessions: [{ d: "x", items: null }] }); }
   assert.equal(one.split("\n").length, 2);
   assert.match(one, /12, 10, 8 @30/);
   assert.equal(parseHistory(one).length, 1);
+}
+
+// adding and removing sets changes today's session only
+{
+  const e = normEx({ name: "Row", weight: "40", sets: 3, min: 8, max: 12 });
+  addSet(e);
+  assert.equal(setCount(e), 4);
+  e.today = [12, 12, 12, 12];
+  assert.match(hint(e).text, /go up to 41/); // all four sets count before advice switches to today
+  removeSet(e, 1);
+  assert.deepEqual(e.today, [12, 12, 12]);
+  assert.equal(setCount(e), 3);
+  removeSet(e, 0); removeSet(e, 0); removeSet(e, 0); // never below one set
+  assert.equal(setCount(e), 1);
+  const s = normState({ v: 1, workouts: [{ name: "Heavy", exercises: [e] }], sessions: [] });
+  const x = s.workouts[0].exercises[0];
+  assert.equal(x.todayN, 1);
+  finish(s, s.workouts[0]);
+  assert.equal(x.todayN, null);
+  assert.equal(setCount(x), 3);
 }
 console.log("ok");

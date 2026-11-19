@@ -14,6 +14,9 @@ function logged(e) {
   return { r, ws };
 }
 
+/** Sets in today's session: the plan's count unless sets were added or removed today. */
+export const setCount = (e) => e.todayN ?? e.sets;
+
 /** "50" or "50 kg" -> 50. Anything else ("light", "20 / 40") -> null, and is treated as text. */
 export function num(w) {
   const m = String(w ?? "").trim().match(/^(\d+(?:\.\d+)?)\s*(?:kg)?$/i);
@@ -45,6 +48,7 @@ export function normEx(e = {}) {
     today: Array.isArray(e.today) ? e.today.map((x) => (x == null ? null : Number(x))) : [],
     todayWs: Array.isArray(e.todayWs) ? Array.from(e.todayWs, str) : [], // weight per set when it differs (drop sets); null = the exercise weight
     todayW: e.todayW == null ? null : String(e.todayW),
+    todayN: e.todayN == null ? null : clamp(parseInt(e.todayN, 10) || 1, 1, 10), // set count for this session only
     last,
     log: Array.isArray(e.log) ? e.log.slice(0, 20) : [],
   };
@@ -82,9 +86,20 @@ export function finish(state, w) {
     x.today = [];
     x.todayWs = [];
     x.todayW = null;
+    x.todayN = null;
   }
   if (items.length) state.sessions = [{ d, name: w.name, items }, ...state.sessions].slice(0, 400);
   return items.length;
+}
+
+/** Add a set to today's session, or remove set i (its reps and weight go with it). */
+export function addSet(e) { e.todayN = Math.min(10, setCount(e) + 1); }
+export function removeSet(e, i) {
+  if (setCount(e) <= 1) return;
+  e.today.splice(i, 1);
+  e.todayWs.splice(i, 1);
+  e.todayN = setCount(e) - 1;
+  if (e.today.every((x) => x == null)) { e.today = []; e.todayWs = []; e.todayW = null; }
 }
 
 /**
@@ -96,7 +111,7 @@ export function hint(e) {
   if (e.tag === "warmup") return null;
   const done = logged(e);
   let src, lead;
-  if (done.r.length >= e.sets) { src = { ...done, w: e.todayW ?? e.weight }; lead = "Today"; }
+  if (done.r.length >= setCount(e)) { src = { ...done, w: e.todayW ?? e.weight }; lead = "Today"; }
   else if (e.last) { src = e.last; lead = "Last time"; }
   else return null;
 
