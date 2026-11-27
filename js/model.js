@@ -51,6 +51,8 @@ export function normEx(e = {}) {
     todayN: e.todayN == null ? null : clamp(parseInt(e.todayN, 10) || 1, 1, 10), // set count for this session only
     last,
     log: Array.isArray(e.log) ? e.log.slice(0, 20) : [],
+    temp: !!e.temp, // added for today only: dropped when the workout is finished
+    skip: !!e.skip, // skipped today: back in the workout once it is finished
   };
 }
 
@@ -78,7 +80,7 @@ export function finish(state, w) {
   const d = today(), items = [];
   for (const x of w.exercises) {
     const { r, ws } = logged(x);
-    if (r.length) {
+    if (r.length && !x.skip) {
       x.last = { d, w: x.todayW ?? x.weight, r, ...withWs(ws) };
       x.log = [x.last, ...x.log].slice(0, 20);
       items.push({ n: x.name, w: x.last.w, r: [...r], ...withWs(ws) });
@@ -87,9 +89,18 @@ export function finish(state, w) {
     x.todayWs = [];
     x.todayW = null;
     x.todayN = null;
+    x.skip = false;
   }
+  w.exercises = w.exercises.filter((x) => !x.temp);
   if (items.length) state.sessions = [{ d, name: w.name, items }, ...state.sessions].slice(0, 400);
   return items.length;
+}
+
+/** A today-only exercise starts from the history of an exercise with the same name in any workout. */
+export function borrowHistory(state, e) {
+  const k = e.name.trim().toLowerCase();
+  const same = state.workouts.flatMap((w) => w.exercises).find((x) => x !== e && !x.temp && x.name.trim().toLowerCase() === k);
+  if (same) { e.last = same.last; e.log = [...same.log]; if (!e.weight) e.weight = same.weight; }
 }
 
 /** Add a set to today's session, or remove set i (its reps and weight go with it). */

@@ -1,5 +1,5 @@
 // Wiring: holds the state, saves it on this phone, renders, and handles every tap.
-import { normState, normEx, num, fmt, today, uid, finish, setCount, addSet, removeSet } from "./model.js";
+import { normState, normEx, num, fmt, today, uid, finish, setCount, addSet, removeSet, borrowHistory } from "./model.js";
 import { parseImport, mergePlan, mergeHistory, keepHistory, historyText } from "./io.js";
 import { appHTML, layerHTML } from "./views.js";
 
@@ -141,14 +141,31 @@ function act(a, d) {
         ...t, name: val("f-name").trim() || "Exercise", tag: val("f-tag"), weight: val("f-weight").trim(),
         step: val("f-step"), sets: val("f-sets"), min: val("f-min"), max: val("f-max"),
       });
+      if (s.isNew) { f.temp = s.swap || !!$("f-temp")?.checked; if (f.temp) borrowHistory(state, f); }
       f.todayN = null; // a new plan count replaces today's
       f.today = f.today.slice(0, f.sets);
       f.todayWs = f.todayWs.slice(0, f.sets);
-      if (s.isNew) w.exercises.push(f); else w.exercises[w.exercises.indexOf(t)] = f;
+      const was = s.swap && findEx(s.swap);
+      if (was) { was.skip = true; w.exercises.splice(w.exercises.indexOf(was) + 1, 0, f); } // the swap sits where the original was
+      else if (s.isNew) w.exercises.push(f); else w.exercises[w.exercises.indexOf(t)] = f;
       ui.sheet = null;
       changed();
       break;
     }
+    case "swap": {
+      e = s && findEx(s.id);
+      if (!e) break;
+      const draft = normEx({ sets: e.sets, min: e.min, max: e.max, step: e.step });
+      draft.name = "";
+      ui.sheet = { type: "edit", isNew: true, draft, swap: e.id };
+      render();
+      break;
+    }
+    case "skip":
+      e = s && findEx(s.id);
+      if (e) { e.skip = true; ui.sheet = null; if (ui.pick?.ex === e.id) ui.pick = null; changed(); } // its logged sets are kept for Undo
+      break;
+    case "unskip": if (e) { e.skip = false; changed(); } break;
     case "up": case "down": {
       e = s && findEx(s.id);
       if (!e) break;

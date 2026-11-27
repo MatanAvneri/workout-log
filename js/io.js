@@ -118,6 +118,7 @@ export function mergePlan(state, plan) {
 export function tableText(w) {
   const rows = ["Exercise\tWeight\tSets and Reps"];
   for (const e of w.exercises) {
+    if (e.temp) continue; // today-only, not part of the plan
     const p = e.tag === "warmup" ? "[WARM-UP] " : e.tag === "optional" ? "[OPTIONAL] " : "";
     rows.push(p + e.name + "\t" + e.weight + "\t" + e.sets + " × " + (e.min === e.max ? e.min : e.min + "-" + e.max));
   }

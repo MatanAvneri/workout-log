@@ -1,6 +1,6 @@
 // Logic check, no dependencies:  node test.mjs
 import assert from "node:assert/strict";
-import { num, normEx, normState, hint, finish, setCount, addSet, removeSet } from "./js/model.js";
+import { num, normEx, normState, hint, finish, setCount, addSet, removeSet, borrowHistory } from "./js/model.js";
 import { parseTable, parsePlan, parseImport, mergePlan, tableText, historyText, parseHistory, mergeHistory } from "./js/io.js";
 
 assert.equal(num("50 kg"), 50);
@@ -94,5 +94,25 @@ function state0() { return normState({ sessions: [{ d: "x", items: null }] }); }
   finish(s, s.workouts[0]);
   assert.equal(x.todayN, null);
   assert.equal(setCount(x), 3);
+}
+
+// today-only and skipped exercises last until the workout is finished
+{
+  const s = normState({ v: 1, workouts: [
+    { name: "Heavy", exercises: [{ name: "Row", weight: "40", sets: 2, min: 8, max: 12, today: [10, 10] }] },
+    { name: "Light", exercises: [{ name: "Push-up", weight: "", sets: 2, min: 10, max: 15, last: { d: "2026-03-01", w: "", r: [12, 12] } }] },
+  ], sessions: [] });
+  const w = s.workouts[0], row = w.exercises[0];
+  row.skip = true; // skipped after logging: not saved
+  const sub = normEx({ name: "push-up ", sets: 2, min: 10, max: 15, temp: true, today: [14, 13] });
+  borrowHistory(s, sub);
+  assert.deepEqual(sub.last.r, [12, 12]);
+  w.exercises.push(sub);
+  assert.ok(!tableText(w).includes("push-up"));
+  assert.equal(finish(s, w), 1);
+  assert.deepEqual(s.sessions[0].items.map((i) => i.n), ["push-up "]);
+  assert.equal(w.exercises.length, 1);
+  assert.equal(row.skip, false);
+  assert.deepEqual(row.today, []);
 }
 console.log("ok");
