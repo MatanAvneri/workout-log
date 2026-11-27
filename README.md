@@ -64,6 +64,16 @@ Shown under each exercise once every set is logged, or from the last session. Wa
 
 The + after the sets adds a set for today, and Remove set under the rep picker drops one; the plan keeps its set count. A set can be given its own weight under the rep picker (a drop set). The sets after it start from that weight. It is saved with the session and left out of the rule above.
 
+## Changing a session
+
+Tap an exercise's name to edit it. For today only you can:
+
+- **Skip today**: the exercise folds away, with Undo.
+- **Swap for today**: skip it and put another exercise in its place. If an exercise with that name exists in any workout, its last result and weight carry over.
+- **Add an exercise** with "Only for today's session" ticked.
+
+Finishing the workout saves what was logged, drops the today-only exercises and brings the skipped ones back. They never reach the copied table.
+
 ## Code
 
 | File | What it holds |

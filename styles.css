@@ -158,6 +158,10 @@ label { display: block; margin-top: 12px; padding: 0 4px; font-size: 13px; color
 input[type=file] { margin-top: 10px; font-size: 14px; max-width: 100%; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.card.ex.skipped { opacity: .6; padding-block: 12px; }
+.card.ex.skipped .head { justify-content: space-between; }
+label.check { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink); }
+label.check input { width: 20px; height: 20px; accent-color: var(--accent); }
 .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .btn { flex: 1 1 auto; min-height: 48px; padding: 0 14px; border-radius: 14px; background: var(--raised); color: var(--accent); font-weight: 600; }
 .btn.solid { background: var(--accent); color: var(--on-accent); }

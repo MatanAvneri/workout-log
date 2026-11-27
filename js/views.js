@@ -1,5 +1,6 @@
 // HTML for every screen. Pure functions of (state, ui) -> string. Clicks are wired by data-a in app.js.
 import { num, fmt, range, hint, repsText, setCount } from "./model.js";
+const live = (e) => !e.skip;
 import { tableText } from "./io.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -25,7 +26,10 @@ export function appHTML(state, w, ui, status) {
 
 function exerciseHTML(e, pick) {
   const id = esc(e.id), n = num(e.weight), picking = pick?.ex === e.id;
-  const tag = e.tag ? `<span class="tag">${e.tag === "warmup" ? "Warm-up" : "Optional"}</span>` : "";
+  if (e.skip) return `<section class="card ex skipped"><div class="head">
+      <p class="name"><b>${esc(e.name)}</b><span>Skipped today</span></p>
+      <button class="link" data-a="unskip" data-id="${id}">Undo</button></div></section>`;
+  const tag = (e.temp ? `<span class="tag">Today only</span>` : "") + (e.tag ? `<span class="tag">${e.tag === "warmup" ? "Warm-up" : "Optional"}</span>` : "");
   const weight = n != null
     ? `<div class="wt">
         <button class="step" data-a="dec" data-id="${id}" aria-label="Less weight">−</button>
@@ -72,7 +76,7 @@ function exerciseHTML(e, pick) {
 /** Everything that floats above the list: the Finish bar and the open sheet. `fresh` animates the sheet in. */
 export function layerHTML(state, w, ui, fresh) {
   let h = "";
-  const logged = w?.exercises.some((e) => e.today.some((x) => x != null));
+  const logged = w?.exercises.some((e) => live(e) && e.today.some((x) => x != null));
   if (logged && !ui.sheet) h += `<div class="bar glass"><button class="primary" data-a="finish">Finish workout</button></div>`;
   if (ui.sheet) {
     const t = ui.sheet.type;
@@ -87,7 +91,8 @@ const sheetTitle = (t) => `<h2>${t}<button class="link" data-a="close">Done</but
 function editHTML(w, ui) {
   const s = ui.sheet, e = s.isNew ? s.draft : w?.exercises.find((x) => x.id === s.id);
   if (!e) return "";
-  let h = sheetTitle(s.isNew ? "Add an exercise" : "Edit exercise") + `
+  const title = s.swap ? "Swap for today" : s.isNew ? "Add an exercise" : "Edit exercise";
+  let h = sheetTitle(title) + `
     <label>Name<input type="text" id="f-name" value="${esc(e.name)}"></label>
     <div class="grid2">
       <label>Weight<input type="text" id="f-weight" value="${esc(e.weight)}" placeholder="50, or “light”"></label>
@@ -103,6 +108,7 @@ function editHTML(w, ui) {
       <option value="warmup"${e.tag === "warmup" ? " selected" : ""}>Warm-up</option>
       <option value="optional"${e.tag === "optional" ? " selected" : ""}>Optional</option>
     </select></label>
+    ${s.isNew ? `<label class="check"><input type="checkbox" id="f-temp"${s.swap ? " checked disabled" : ""}> Only for today’s session</label>` : ""}
     <div class="row"><button class="btn solid" data-a="saveex">Save exercise</button></div>`;
   if (!s.isNew) {
     h += `<div class="row">
@@ -110,6 +116,10 @@ function editHTML(w, ui) {
       <button class="btn" data-a="down">Move down</button>
       <button class="btn danger" data-a="delex">${ui.confirm === "delex" ? "Tap again to delete" : "Delete"}</button>
     </div>`;
+    if (!e.temp) h += `<div class="row">
+      <button class="btn" data-a="swap">Swap for today</button>
+      <button class="btn" data-a="skip">Skip today</button>
+    </div><p class="note">Both last for this session only; finishing the workout brings the exercise back.</p>`;
     if (e.log.length) h += `<h3>History</h3>` + e.log.slice(0, 8).map((l) => `<p class="sess"><span>${esc(l.d)}</span><span class="r">${esc(repsText(l.r || [], l.ws))} at ${esc(l.w)}</span></p>`).join("");
   }
   return h;
